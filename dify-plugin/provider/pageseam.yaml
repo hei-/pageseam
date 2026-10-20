@@ -33,6 +33,25 @@ credentials_for_provider:
     placeholder:
       en_US: Bearer token of the service
       zh_Hans: 服务的 Bearer Token
+  language:
+    type: select
+    required: false
+    default: en
+    label:
+      en_US: Language
+      zh_Hans: 语言
+    help:
+      en_US: Language of messages, of the service's error messages and of the page labels at the start of each knowledge base chunk.
+      zh_Hans: 提示信息、服务端报错，以及知识库分段开头页码标注所用的语言。
+    options:
+      - value: en
+        label:
+          en_US: English
+          zh_Hans: English
+      - value: zh
+        label:
+          en_US: 中文
+          zh_Hans: 中文
 tools:
   - tools/parse_document.yaml
   - tools/convert_document.yaml

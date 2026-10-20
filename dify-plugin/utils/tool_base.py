@@ -8,6 +8,7 @@ from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
 from utils.client import DocParserClient, DocParserError
+from utils.i18n import language, t
 
 DEFAULT_WAIT_SECONDS = 540  # 插件单次调用上限是 600 秒，留出下载结果的时间
 SUPPORTED_EXTENSIONS = {
@@ -27,6 +28,10 @@ class DocParserTool(Tool):
     def _client(self) -> DocParserClient:
         return DocParserClient.from_credentials(self.runtime.credentials)
 
+    @property
+    def lang(self) -> str:
+        return language(self.runtime.credentials)
+
     @staticmethod
     def _wait_seconds(params: dict[str, Any]) -> float:
         try:
@@ -38,11 +43,14 @@ class DocParserTool(Tool):
     def _submit_and_wait(self, params: dict[str, Any], outputs: list[str]) -> dict:
         file = params.get("file")
         if not file:
-            raise DocParserError("缺少文件")
+            raise DocParserError(t("missing_file", self.lang))
         filename = file.filename or "document.pdf"
         extension = os.path.splitext(filename)[1].lower()
         if extension not in SUPPORTED_EXTENSIONS:
-            raise DocParserError(f"不支持 {extension or '无扩展名'} 文件，支持：{', '.join(sorted(SUPPORTED_EXTENSIONS))}")
+            raise DocParserError(t(
+                "unsupported_file", self.lang,
+                extension=extension or t("no_extension", self.lang), supported=", ".join(sorted(SUPPORTED_EXTENSIONS)),
+            ))
 
         client = self._client()
         job = client.submit(
@@ -65,10 +73,8 @@ class DocParserTool(Tool):
         yield self.create_variable_message("status", job["status"])
         if job["status"] != "succeeded":
             progress = job.get("progress") or {}
-            detail = f"，{progress.get('stage')} {progress.get('done')}/{progress.get('total')}" if progress else ""
-            yield self.create_text_message(
-                f"文档仍在处理中（{job['status']}{detail}）。请稍后用「查询任务结果」工具，传入 job_id={job['job_id']} 获取结果。"
-            )
+            detail = t("progress", self.lang, stage=progress.get("stage"), done=progress.get("done"), total=progress.get("total")) if progress else ""
+            yield self.create_text_message(t("still_running", self.lang, status=job["status"], detail=detail, job_id=job["job_id"]))
             return
 
         client = self._client()

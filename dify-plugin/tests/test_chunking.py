@@ -100,7 +100,7 @@ class ChunkingTest(unittest.TestCase):
         def tables(rows, table_max):
             md = (f"<!-- page 1 -->\n{PARAGRAPH}\n\n<!-- table pages 1-2 -->\n{table(rows)}\n"
                   f"<!-- page 2 -->\n{PARAGRAPH}\n")
-            found = [c for c in chunk_markdown(md, MAX, table_max) if "| WL-" in c]
+            found = [c for c in chunk_markdown(md, MAX, table_max, lang="zh") if "| WL-" in c]
             for c in found:
                 self.assertTrue(c.startswith("【第 1–2 页】"))
                 self.assertNotIn(PARAGRAPH, c)
@@ -114,7 +114,7 @@ class ChunkingTest(unittest.TestCase):
     def test_short_cross_page_table_still_alone(self):
         """跨页表格即使很短，也不和正文放在同一段。"""
         md = f"<!-- page 1 -->\n{PARAGRAPH}\n\n<!-- table pages 1-2 -->\n{table(3)}\n<!-- page 2 -->\n{PARAGRAPH}\n"
-        chunks = chunk_markdown(md, MAX)
+        chunks = chunk_markdown(md, MAX, lang="zh")
         self.assertEqual(len(chunks), 3)
         self.assertTrue(chunks[1].startswith("【第 1–2 页】"))
 
@@ -125,10 +125,17 @@ class LimitsTest(unittest.TestCase):
     def test_doc_name_in_label(self):
         """文档名放在每段标注的最前面，跨页表格同样标注；不传文档名时只标注页码。"""
         md = f"<!-- page 1 -->\n# 充电\n\n{PARAGRAPH}\n<!-- page 2 -->\n<!-- table pages 2-3 -->\n{table(3)}\n"
-        chunks = chunk_markdown(md, MAX, 0, "手册 v2.1")
+        chunks = chunk_markdown(md, MAX, 0, "手册 v2.1", "zh")
         self.assertEqual([c.split("\n", 1)[0] for c in chunks], ["【手册 v2.1 · 第 1 页】", "【手册 v2.1 · 第 2–3 页 · 充电】"])
         self.assertEqual([body(c) for c in chunks], [body(c) for c in chunk_markdown(md, MAX)])
-        self.assertTrue(chunk_markdown(md, MAX)[0].startswith("【第 1 页】"))
+        self.assertTrue(chunk_markdown(md, MAX, lang="zh")[0].startswith("【第 1 页】"))
+
+    def test_english_labels(self):
+        """默认英文：标注用方括号，单页 p.，跨页 pp.；内容和中文标注时一样。"""
+        md = f"<!-- page 1 -->\n# Charging\n\n{PARAGRAPH}\n<!-- page 2 -->\n<!-- table pages 2-3 -->\n{table(3)}\n"
+        chunks = chunk_markdown(md, MAX, 0, "Manual v2.1")
+        self.assertEqual([c.split("\n", 1)[0] for c in chunks], ["[Manual v2.1 · p. 1]", "[Manual v2.1 · pp. 2–3 · Charging]"])
+        self.assertEqual([body(c) for c in chunks], [body(c) for c in chunk_markdown(md, MAX, 0, "Manual v2.1", "zh")])
 
     def test_doc_label(self):
         self.assertEqual(doc_label("version_manual_v2_1.pdf"), "version_manual_v2_1")

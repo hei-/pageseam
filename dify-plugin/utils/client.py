@@ -6,6 +6,8 @@ from typing import Any
 
 import httpx
 
+from utils.i18n import ACCEPT_LANGUAGE, DEFAULT_LANGUAGE, language, t
+
 POLL_START_SECONDS = 2.0
 POLL_MAX_SECONDS = 10.0
 MAX_POLL_ERRORS = 3  # 轮询时网络错误连续出现这么多次才放弃
@@ -20,33 +22,35 @@ class DocParserError(Exception):
 class DocParserClient:
     base_url: str
     api_key: str
+    lang: str = DEFAULT_LANGUAGE
 
     @classmethod
     def from_credentials(cls, credentials: dict[str, Any]) -> "DocParserClient":
         base_url = (credentials.get("base_url") or "").strip().rstrip("/")
         api_key = (credentials.get("api_key") or "").strip()
+        lang = language(credentials)
         if not base_url.startswith(("http://", "https://")):
-            raise DocParserError("服务地址需要以 http:// 或 https:// 开头")
+            raise DocParserError(t("bad_base_url", lang))
         if not api_key:
-            raise DocParserError("缺少 API Key")
-        return cls(base_url, api_key)
+            raise DocParserError(t("missing_api_key", lang))
+        return cls(base_url, api_key, lang)
 
     def _request(self, method: str, path: str, timeout: float = 30, **kwargs) -> httpx.Response:
         try:
             response = httpx.request(
                 method,
                 self.base_url + path,
-                # 插件自己的提示是中文，服务端的报错和判定报告也要中文
-                headers={"Authorization": f"Bearer {self.api_key}", "Accept-Language": "zh-CN"},
+                # 服务端的报错和判定报告用插件同一种语言
+                headers={"Authorization": f"Bearer {self.api_key}", "Accept-Language": ACCEPT_LANGUAGE[self.lang]},
                 timeout=timeout,
                 **kwargs,
             )
         except httpx.TimeoutException as e:
-            raise DocParserNetworkError(f"请求文档解析服务超时：{e}") from e
+            raise DocParserNetworkError(t("timeout", self.lang, error=e)) from e
         except httpx.HTTPError as e:
-            raise DocParserNetworkError(f"无法连接文档解析服务 {self.base_url}：{e}") from e
+            raise DocParserNetworkError(t("unreachable", self.lang, url=self.base_url, error=e)) from e
         if response.status_code == 401:
-            raise DocParserError("API Key 无效")
+            raise DocParserError(t("invalid_api_key", self.lang))
         if response.status_code == 429:
             raise DocParserBusy(response.headers.get("Retry-After", "30"))
         if response.status_code >= 400:
@@ -54,7 +58,7 @@ class DocParserClient:
                 detail = response.json().get("detail")
             except ValueError:
                 detail = response.text[:200]
-            raise DocParserError(f"文档解析服务返回 {response.status_code}：{detail}")
+            raise DocParserError(t("http_error", self.lang, status=response.status_code, detail=detail))
         return response
 
     def info(self) -> dict:
@@ -72,7 +76,7 @@ class DocParserClient:
                 ).json()
             except DocParserBusy as e:
                 if attempt == MAX_BUSY_RETRIES:
-                    raise DocParserError("文档解析服务排队已满，请稍后重试") from e
+                    raise DocParserError(t("queue_full", self.lang)) from e
                 time.sleep(min(float(e.retry_after or 30), 60))
         raise AssertionError("unreachable")
 
@@ -96,7 +100,7 @@ class DocParserClient:
                 if errors >= MAX_POLL_ERRORS:
                     raise
         if job["status"] == "failed":
-            raise DocParserError(f"解析失败：{job.get('error')}")
+            raise DocParserError(t("job_failed", self.lang, error=job.get("error")))
         return job
 
     def download(self, job_id: str, kind: str) -> bytes:

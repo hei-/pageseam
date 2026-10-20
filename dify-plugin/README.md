@@ -24,6 +24,7 @@ Parse PDF, Word (doc, docx), PowerPoint and images with your self-hosted [PageSe
 |-------|-------------|
 | Service URL | E.g. `http://<server IP>:8000`. Must be reachable from Dify's `plugin_daemon` container — use the host's LAN IP, not `localhost` |
 | API Key | The service's API key |
+| Language | English (default) or 中文: language of messages, of the service's error messages and of the page labels in `chunks`. Use 中文 for Chinese documents |
 
 ## Installation
 

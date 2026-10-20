@@ -24,6 +24,7 @@
 |------|------|
 | 服务地址 | 例如 `http://<服务器 IP>:8000`。要能从 Dify 的 `plugin_daemon` 容器访问：用宿主机内网 IP，不要用 `localhost` |
 | API Key | 服务的 API Key |
+| 语言 | English（默认）或中文：提示信息、服务端报错和 `chunks` 页码标注的语言。中文文档选「中文」 |
 
 ## 安装
 

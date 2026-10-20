@@ -23,7 +23,7 @@ class ParseDocumentTool(tool_base.DocParserTool):
             if message.type == ToolInvokeMessage.MessageType.TEXT and job["status"] == "succeeded":
                 markdown = message.message.text
                 # 知识流水线可直接把 chunks 接到知识库节点，不需要再经过通用分块器
-                chunks = chunking.chunk_markdown(markdown, max_chars, table_max_chars, doc_name)
+                chunks = chunking.chunk_markdown(markdown, max_chars, table_max_chars, doc_name, self.lang)
                 yield self.create_variable_message("chunks", chunks)
                 if not keep_markers:
                     message.message.text = PAGE_MARKER.sub("", markdown)

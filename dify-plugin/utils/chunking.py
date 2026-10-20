@@ -2,7 +2,7 @@
 
 通用分块器只按分隔符切分，不会合并短段落：页码标记会单独成为一段，正文分段里没有页码。
 这里按页、按段落合并到不超过 max_chars，标题开始新的分段，
-每段以「【文档名 · 第 N 页 · 章节标题】」开头，检索到任何一段都能引用页码。
+每段以「【文档名 · 第 N 页 · 章节标题】」开头（英文是 "[name · p. N · section]"），检索到任何一段都能引用页码。
 文档名用来区分内容相近的文档（如同一手册的新旧版本）：知识库检索交给模型的只有分段内容，没有文件名。
 HTML 表格转成纯文本表格，避免标签占用关键词索引的名额。
 
@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import re
 from html import unescape
+
+from utils.i18n import DEFAULT_LANGUAGE, page_label
 
 PAGE_MARKER = re.compile(r"^<!-- page (\d+) -->\s*$", re.MULTILINE)
 TABLE_PAGES = re.compile(r"^<!-- table pages (\d+)-(\d+) -->\n")
@@ -111,7 +113,9 @@ def doc_label(filename: str | None) -> str:
     return re.sub(r"[【】\s]+", " ", stem).strip()
 
 
-def chunk_markdown(markdown: str, max_chars: int = 800, table_max_chars: int = 0, doc_name: str = "") -> list[str]:
+def chunk_markdown(
+    markdown: str, max_chars: int = 800, table_max_chars: int = 0, doc_name: str = "", lang: str = DEFAULT_LANGUAGE
+) -> list[str]:
     table_max_chars = max(table_max_chars, max_chars)
     chunks: list[str] = []
     heading = ""  # 当前章节标题，跨页延续
@@ -124,11 +128,13 @@ def chunk_markdown(markdown: str, max_chars: int = 800, table_max_chars: int = 0
             if not current:
                 return
             text = "\n\n".join(current)
-            label = f"{doc_name} · 第 {pages or page} 页" if doc_name else f"第 {pages or page} 页"
+            label = page_label(str(pages or page), lang)
+            if doc_name:
+                label = f"{doc_name} · {label}"
             # 分段本身以标题开头时不重复章节名
             if current_heading and not current[0].startswith("#"):
                 label += f" · {current_heading}"
-            chunks.append(f"【{label}】\n{text}")
+            chunks.append(f"【{label}】\n{text}" if lang == "zh" else f"[{label}]\n{text}")
             current.clear()
 
         for block in (b.strip() for b in body.split("\n\n")):

@@ -119,7 +119,7 @@ parameters:
       en_US: Document name in chunks
       zh_Hans: 分段标注文档名
     human_description:
-      en_US: Start every chunk with the file name, e.g. 【Manual v2.1 · 第 3 页】, so the model can tell similar documents (such as old and new versions) apart.
+      en_US: Start every chunk with the file name, e.g. "[Manual v2.1 · p. 3]", so the model can tell similar documents (such as old and new versions) apart.
       zh_Hans: 每段开头标注文件名，如「【手册 v2.1 · 第 3 页】」，模型才能区分内容相近的文档（如同一手册的新旧版本）。
 output_schema:
   type: object
@@ -128,7 +128,7 @@ output_schema:
       type: array
       items:
         type: string
-      description: Knowledge base chunks split by page; each starts with 【document · 第 N 页 · section】. Connect it to the Knowledge Base node directly.
+      description: Knowledge base chunks split by page; each starts with "[document · p. N · section]" (in Chinese when the credential language is Chinese). Connect it to the Knowledge Base node directly.
     job_id:
       type: string
       description: Job id; pass it to get_job_result when the job is still running
