@@ -1,0 +1,33 @@
+version: 0.1.0
+type: plugin
+author: hei-
+name: pageseam
+label:
+  en_US: PageSeam
+  zh_Hans: PageSeam 文档解析
+description:
+  en_US: Turn PDFs, Word files and scans into clean Markdown, searchable PDF or Word — on CPU, on your own server. Requires a self-hosted PageSeam service.
+  zh_Hans: 把 PDF、Word 和扫描件转成干净的 Markdown、可搜索 PDF 或 Word，CPU 就能跑，部署在你自己的服务器上。需要先部署 PageSeam 服务。
+icon: icon.svg
+resource:
+  memory: 268435456
+  permission:
+    tool:
+      enabled: true
+plugins:
+  tools:
+    - provider/pageseam.yaml
+meta:
+  version: 0.0.1
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
+created_at: 2026-10-11T22:00:00+08:00
+privacy: PRIVACY.md
+repo: https://github.com/hei-/pageseam
+contact: related_storm_1g@icloud.com
+verified: false

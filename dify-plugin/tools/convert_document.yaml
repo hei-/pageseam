@@ -1,0 +1,161 @@
+identity:
+  name: convert_document
+  author: hei-
+  label:
+    en_US: Convert PDF to Word / Searchable PDF
+    zh_Hans: PDF 转 Word / 可搜索 PDF
+description:
+  human:
+    en_US: Convert a PDF, Word document or image into Word and/or a searchable PDF. The searchable PDF looks exactly like the original with an invisible OCR text layer; text pages in Word keep the original layout.
+    zh_Hans: 把 PDF、Word 或图片转换成 Word 和 / 或可搜索 PDF。可搜索 PDF 外观和原件完全一致，扫描页叠加隐藏的 OCR 文字层；Word 中文字型页保留原版式。
+  llm: Convert a PDF, Word or image file into an editable Word document (docx) and/or a searchable PDF. Returns the files.
+parameters:
+  - name: file
+    type: file
+    required: true
+    form: llm
+    label:
+      en_US: File
+      zh_Hans: 文件
+    human_description:
+      en_US: PDF, Word (doc, docx), PowerPoint (ppt, pptx) or image (png, jpg, tif, webp, bmp). Office files are converted to PDF first.
+      zh_Hans: PDF、Word（doc、docx）、PPT（ppt、pptx）或图片（png、jpg、tif、webp、bmp）。Office 文件先转成 PDF。
+    llm_description: The PDF, Word, PowerPoint or image file to process.
+  - name: output_format
+    type: select
+    required: false
+    default: both
+    form: form
+    label:
+      en_US: Output
+      zh_Hans: 输出
+    human_description:
+      en_US: Word, searchable PDF, or both.
+      zh_Hans: 输出 Word、可搜索 PDF，或两者都要。
+    options:
+      - value: both
+        label:
+          en_US: Word + searchable PDF
+          zh_Hans: Word + 可搜索 PDF
+      - value: docx
+        label:
+          en_US: Word
+          zh_Hans: Word
+      - value: pdf
+        label:
+          en_US: Searchable PDF
+          zh_Hans: 可搜索 PDF
+  - name: word_images
+    type: select
+    required: false
+    default: replace
+    form: form
+    label:
+      en_US: Images in Word
+      zh_Hans: Word 中的图片
+    human_description:
+      en_US: For images inside text pages. replace turns images containing tables or text into editable content (photos and logos stay); keep leaves all images; both keeps images and adds the recognized content below.
+      zh_Hans: 文字页中的图片。replace：有表格或文字的图片换成可编辑内容（照片、Logo 保留）；keep：全部保留为图片；both：保留图片，并在下方附上识别出的内容。
+    options:
+      - value: replace
+        label:
+          en_US: Replace with editable content
+          zh_Hans: 换成可编辑内容
+      - value: keep
+        label:
+          en_US: Keep images
+          zh_Hans: 保留图片
+      - value: both
+        label:
+          en_US: Keep images and add text
+          zh_Hans: 保留图片并附上识别内容
+  - name: word_tables
+    type: select
+    required: false
+    default: keep
+    form: form
+    label:
+      en_US: Tables across pages in Word
+      zh_Hans: Word 中的跨页表格
+    human_description:
+      en_US: keep follows the original pagination, one table per page; merge joins a table that spans pages into one table whose header repeats on every page, convenient for adding rows, sorting or totals.
+      zh_Hans: keep：和原件分页一致，每页一张表；merge：跨页的表格合并成一张，表头在每页自动重复，方便加行、排序、合计。
+    options:
+      - value: keep
+        label:
+          en_US: Keep as in the original
+          zh_Hans: 和原件分页一致
+      - value: merge
+        label:
+          en_US: Merge into one table
+          zh_Hans: 合并成一张表
+  - name: ocr
+    type: select
+    required: false
+    default: auto
+    form: form
+    label:
+      en_US: OCR
+      zh_Hans: OCR
+    human_description:
+      en_US: auto detects page by page; force runs OCR on every page; off never runs OCR.
+      zh_Hans: auto 逐页自动判断；force 所有页面 OCR；off 不做 OCR。
+    options:
+      - value: auto
+        label:
+          en_US: Auto
+          zh_Hans: 自动判断
+      - value: force
+        label:
+          en_US: Force
+          zh_Hans: 全部 OCR
+      - value: "off"
+        label:
+          en_US: "Off"
+          zh_Hans: 不做 OCR
+  - name: ocr_pages
+    type: string
+    required: false
+    form: form
+    label:
+      en_US: Extra OCR pages
+      zh_Hans: 额外指定 OCR 的页
+    human_description:
+      en_US: Pages that always get full-page OCR, e.g. 3,5-8. Use when auto detection is wrong.
+      zh_Hans: 这些页始终整页 OCR，如 3,5-8。自动判断出错时使用。
+  - name: pages
+    type: string
+    required: false
+    form: llm
+    label:
+      en_US: Page range
+      zh_Hans: 页码范围
+    human_description:
+      en_US: Only process these pages, e.g. 1-10 or 2,4-6. Empty means all pages.
+      zh_Hans: 只处理这些页，如 1-10 或 2,4-6。留空处理全部。
+    llm_description: Optional 1-based page ranges to process, e.g. "1-10". Leave empty for all pages.
+  - name: wait_seconds
+    type: number
+    required: false
+    default: 540
+    form: form
+    label:
+      en_US: Wait seconds
+      zh_Hans: 等待秒数
+    human_description:
+      en_US: How long to wait for the result (max 540). If not finished, returns job_id for Get Job Result.
+      zh_Hans: 等待结果的最长时间（最多 540 秒）。超时后返回 job_id，可用「查询任务结果」工具获取。
+output_schema:
+  type: object
+  properties:
+    job_id:
+      type: string
+    status:
+      type: string
+    page_count:
+      type: number
+    ocr_pages:
+      type: number
+extra:
+  python:
+    source: tools/convert_document.py

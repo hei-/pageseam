@@ -1,0 +1,42 @@
+identity:
+  author: hei-
+  name: pageseam
+  label:
+    en_US: PageSeam
+    zh_Hans: PageSeam 文档解析
+  description:
+    en_US: Self-hosted document parsing. Detects page by page whether OCR is needed; outputs Markdown, searchable PDF or Word.
+    zh_Hans: 自建文档解析服务。逐页自动判断是否需要 OCR，输出 Markdown、可搜索 PDF 或 Word。
+  icon: icon.svg
+  tags:
+    - productivity
+    - utilities
+credentials_for_provider:
+  base_url:
+    type: text-input
+    required: true
+    label:
+      en_US: Service URL
+      zh_Hans: 服务地址
+    placeholder:
+      en_US: e.g. http://<server IP>:8000
+      zh_Hans: 例如 http://<服务器 IP>:8000
+    help:
+      en_US: Address of the PageSeam service, reachable from the Dify plugin daemon.
+      zh_Hans: PageSeam 服务的地址，需要能从 Dify 插件运行环境访问。
+  api_key:
+    type: secret-input
+    required: true
+    label:
+      en_US: API Key
+      zh_Hans: API Key
+    placeholder:
+      en_US: Bearer token of the service
+      zh_Hans: 服务的 Bearer Token
+tools:
+  - tools/parse_document.yaml
+  - tools/convert_document.yaml
+  - tools/get_job_result.yaml
+extra:
+  python:
+    source: provider/pageseam.py

@@ -1,0 +1,12 @@
+fastapi==0.142.2
+# starlette 和 python-multipart 处理上传和下载请求，单独锁定到已修复安全漏洞的版本
+starlette==1.7.0
+uvicorn[standard]==0.34.2
+python-multipart==0.0.32
+pymupdf==1.28.2
+pymupdf4llm==1.28.2
+pdf2docx==0.5.13
+python-docx==1.2.0
+docxcompose==2.2.0
+# paddlepaddle 在 Dockerfile 中单独安装（CPU / GPU 版由构建参数决定）
+paddleocr[doc-parser]==3.7.0

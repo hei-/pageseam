@@ -1,0 +1,26 @@
+# 安全检查：只能在 GitHub 的 Actions 页面手动运行（不随推送、PR 自动触发）
+# 内容和本地 ./scripts/security-check.sh 相同；勾选 scan_image 时另外构建镜像，用 Trivy 扫描系统软件包和 LibreOffice
+name: Security check
+
+on:
+  workflow_dispatch:
+    inputs:
+      scan_image:
+        description: Build the image and scan it with Trivy (about 20 minutes)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        if: inputs.scan_image
+        run: docker build -t pageseam:scan .
+      - name: Security check
+        run: ./scripts/security-check.sh ${{ inputs.scan_image && '--image pageseam:scan' || '' }}

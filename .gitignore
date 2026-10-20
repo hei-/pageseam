@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+*.difypkg
+# 生成的测试样例和验收文件（make_sample.py / make_tables_sample.py 生成，可随时重新生成）；自己的真实文件也放这里
+tests/samples/

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PageSeam</title>
+<style>
+  :root { --fg: #1f2328; --muted: #656d76; --border: #d0d7de; --bg: #fff; --panel: #f6f8fa; --accent: #0969da; --ok: #1a7f37; --warn: #9a6700; --err: #cf222e; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --muted: #8d96a0; --border: #30363d; --bg: #0d1117; --panel: #161b22; --accent: #4493f8; --ok: #3fb950; --warn: #d29922; --err: #f85149; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.6 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--fg); background: var(--bg); }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .muted { color: var(--muted); }
+  .card { border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; background: var(--panel); }
+  label { display: block; font-weight: 600; margin: 12px 0 4px; }
+  input[type=text], input[type=password], select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .row > div { flex: 1 1 200px; }
+  .checks label { display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-right: 16px; }
+  #drop { border: 2px dashed var(--border); border-radius: 8px; padding: 28px; text-align: center; cursor: pointer; margin-top: 12px; }
+  #drop.over { border-color: var(--accent); }
+  button { margin-top: 16px; padding: 9px 20px; border: 0; border-radius: 6px; background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .tag { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 12px; border: 1px solid var(--border); }
+  .ocr { color: var(--warn); border-color: var(--warn); }
+  .files a { display: inline-block; margin: 8px 12px 0 0; color: var(--accent); font-weight: 600; }
+  .err { color: var(--err); }
+  .ok { color: var(--ok); }
+  progress { width: 100%; height: 8px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  #lang { margin: 0; padding: 4px 12px; background: none; color: var(--accent); border: 1px solid var(--border); font-weight: normal; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <header><h1>PageSeam</h1><button id="lang" type="button"></button></header>
+  <div class="muted"><span data-i18n="intro"></span> v{{VERSION}}</div>
+
+  <div class="card">
+    <label for="key">API Key</label>
+    <input id="key" type="password" data-i18n-placeholder="keyHint" autocomplete="off">
+
+    <div id="drop"><span data-i18n="drop"></span><div id="fname" class="muted"></div></div>
+    <input id="file" type="file" accept=".pdf,.doc,.docx,.docm,.dot,.dotx,.rtf,.odt,.wps,.ppt,.pptx,.odp,.dps,.png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp" hidden>
+
+    <label data-i18n="outputs"></label>
+    <div class="checks">
+      <label><input type="checkbox" name="out" value="docx" checked> Word</label>
+      <label><input type="checkbox" name="out" value="pdf" checked> <span data-i18n="outPdf"></span></label>
+      <label><input type="checkbox" name="out" value="markdown"> Markdown</label>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="ocr">OCR</label>
+        <select id="ocr">
+          <option value="auto" data-i18n="ocrAuto"></option>
+          <option value="force" data-i18n="ocrForce"></option>
+          <option value="off" data-i18n="ocrOff"></option>
+        </select>
+      </div>
+      <div>
+        <label for="ocr_pages" data-i18n="ocrPages"></label>
+        <input id="ocr_pages" type="text" data-i18n-placeholder="ocrPagesHint">
+      </div>
+      <div>
+        <label for="word_images" data-i18n="wordImages"></label>
+        <select id="word_images">
+          <option value="replace" data-i18n="imgReplace"></option>
+          <option value="keep" data-i18n="imgKeep"></option>
+          <option value="both" data-i18n="imgBoth"></option>
+        </select>
+      </div>
+      <div>
+        <label for="word_tables" data-i18n="wordTables"></label>
+        <select id="word_tables">
+          <option value="keep" data-i18n="tblKeep"></option>
+          <option value="merge" data-i18n="tblMerge"></option>
+        </select>
+      </div>
+      <div>
+        <label for="pages" data-i18n="pages"></label>
+        <input id="pages" type="text" data-i18n-placeholder="pagesHint">
+      </div>
+    </div>
+    <button id="go" data-i18n="go" disabled></button>
+  </div>
+
+  <div id="status" class="card" hidden></div>
+</main>
+<script>
+const TEXT = {
+  en: {
+    intro: "PDF, Word and images to Word / searchable PDF / Markdown. OCR only where a page needs it, tables across pages merged, files stay on this server, results kept for {{TTL}} minutes.",
+    keyHint: "Bearer token, stored only in this browser",
+    drop: "Click to choose, or drop a PDF / Word / PowerPoint / image",
+    outputs: "Outputs", outPdf: "Searchable PDF (looks identical to the original)",
+    ocrAuto: "Automatic (recommended)", ocrForce: "OCR every page", ocrOff: "No OCR",
+    ocrPages: "Extra pages to OCR", ocrPagesHint: "e.g. 3,5-8, if automatic detection gets it wrong",
+    wordImages: "Images in Word", imgReplace: "Replace images containing text with editable content (recommended)",
+    imgKeep: "Keep images", imgBoth: "Keep images and add the recognized content",
+    wordTables: "Tables across pages in Word", tblKeep: "Match the original pagination", tblMerge: "Merge into one table, header repeated on each page",
+    pages: "Only these pages", pagesHint: "Leave empty for all pages",
+    go: "Convert", needOutput: "Choose at least one output", uploading: "Uploading…", queued: "Queued…",
+    processing: "Processing", failed: "Failed: ", jobFailed: "Processing failed",
+    dlDocx: "Download Word", dlPdf: "Download searchable PDF", dlMarkdown: "Download Markdown",
+    done: (n, ocr, s) => `✅ Done: ${n} pages, ${ocr} with OCR, ${s} s`,
+    colPage: "Page", colKind: "Verdict", colReason: "Reason", colTime: "Time",
+    mb: (name, mb) => `${name} (${mb} MB)`, switchTo: "中文",
+  },
+  zh: {
+    intro: "PDF、Word、图片转 Word / 可搜索 PDF / Markdown。逐页自动判断是否需要 OCR，跨页表格合并，文件不出服务器，结果保留 {{TTL}} 分钟。",
+    keyHint: "Bearer Token，只保存在本浏览器",
+    drop: "点击选择或拖入 PDF / Word / PPT / 图片",
+    outputs: "输出", outPdf: "可搜索 PDF（和原件外观一致）",
+    ocrAuto: "自动判断（推荐）", ocrForce: "全部页面 OCR", ocrOff: "不做 OCR",
+    ocrPages: "额外指定 OCR 的页", ocrPagesHint: "如 3,5-8，自动判断出错时使用",
+    wordImages: "Word 中的图片", imgReplace: "有文字的图片换成可编辑内容（推荐）",
+    imgKeep: "保留图片", imgBoth: "保留图片并附上识别内容",
+    wordTables: "Word 中的跨页表格", tblKeep: "和原件分页一致", tblMerge: "合并成一张表，表头每页重复",
+    pages: "只处理这些页", pagesHint: "留空处理全部",
+    go: "开始转换", needOutput: "至少选择一种输出", uploading: "上传中…", queued: "排队中…",
+    processing: "处理中", failed: "失败：", jobFailed: "处理失败",
+    dlDocx: "下载 Word", dlPdf: "下载可搜索 PDF", dlMarkdown: "下载 Markdown",
+    done: (n, ocr, s) => `✅ 完成：${n} 页，OCR ${ocr} 页，用时 ${s} 秒`,
+    colPage: "页", colKind: "判定", colReason: "依据", colTime: "耗时",
+    mb: (name, mb) => `${name}（${mb} MB）`, switchTo: "English",
+  },
+};
+
+function detectLang() {
+  try { const saved = localStorage.getItem("pageseam.lang"); if (TEXT[saved]) return saved; } catch (e) {}
+  for (const l of navigator.languages || [navigator.language || ""]) {
+    const code = l.toLowerCase().split("-")[0];
+    if (TEXT[code]) return code;
+  }
+  return "en";
+}
+let lang = detectLang();
+const T = () => TEXT[lang];
+
+function applyLang() {
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.title = lang === "zh" ? "PageSeam 文档解析" : "PageSeam";
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = T()[el.dataset.i18n]; });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = T()[el.dataset.i18nPlaceholder]; });
+  document.getElementById("lang").textContent = T().switchTo;
+  showFileName();
+}
+
+const $ = (id) => document.getElementById(id);
+const keyInput = $("key"), fileInput = $("file"), drop = $("drop"), go = $("go"), box = $("status");
+let file = null;
+
+try { keyInput.value = localStorage.getItem("pageseam.key") || ""; } catch (e) {}
+keyInput.addEventListener("change", () => { try { localStorage.setItem("pageseam.key", keyInput.value); } catch (e) {} });
+
+function showFileName() { $("fname").textContent = file ? T().mb(file.name, (file.size / 1048576).toFixed(1)) : ""; }
+function pick(f) { file = f; showFileName(); go.disabled = !f; }
+$("lang").onclick = () => {
+  lang = lang === "zh" ? "en" : "zh";
+  try { localStorage.setItem("pageseam.lang", lang); } catch (e) {}
+  applyLang();
+};
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => pick(fileInput.files[0]);
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); pick(e.dataTransfer.files[0]); };
+
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// 报错信息和逐页判定报告按页面语言返回
+const headers = () => ({ Authorization: "Bearer " + keyInput.value.trim(), "Accept-Language": lang === "zh" ? "zh-CN" : "en" });
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { ...headers(), ...(opts.headers || {}) } });
+  if (!res.ok) {
+    let msg = res.status + " " + res.statusText;
+    try { const body = await res.json(); msg = body.detail || msg; } catch (e) {}
+    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
+  }
+  return res;
+}
+
+go.onclick = async () => {
+  const outputs = [...document.querySelectorAll("input[name=out]:checked")].map((c) => c.value);
+  if (!outputs.length) { alert(T().needOutput); return; }
+  const form = new FormData();
+  form.append("file", file);
+  form.append("outputs", outputs.join(","));
+  form.append("ocr", $("ocr").value);
+  form.append("ocr_pages", $("ocr_pages").value);
+  form.append("pages", $("pages").value);
+  form.append("word_images", $("word_images").value);
+  form.append("word_tables", $("word_tables").value);
+  go.disabled = true;
+  box.hidden = false;
+  box.textContent = T().uploading;
+  try {
+    const job = await (await api("/v1/jobs", { method: "POST", body: form })).json();
+    await poll(job.job_id);
+  } catch (e) {
+    box.innerHTML = `<span class="err">${esc(T().failed + e.message)}</span>`;
+  } finally {
+    go.disabled = !file;
+  }
+};
+
+async function poll(id) {
+  for (;;) {
+    const job = await (await api(`/v1/jobs/${id}`)).json();
+    if (job.status === "succeeded") return render(job);
+    if (job.status === "failed") throw new Error(job.error || T().jobFailed);
+    const p = job.progress || {};
+    const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+    box.innerHTML = job.status === "queued" ? esc(T().queued) :
+      `${esc(p.stage || T().processing)} ${p.total ? `${p.done}/${p.total}` : ""}<progress value="${pct}" max="100"></progress>`;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
+async function download(id, kind, a) {
+  const res = await api(`/v1/jobs/${id}/files/${kind}`);
+  const name = decodeURIComponent((res.headers.get("content-disposition") || "").match(/filename\*?=(?:utf-8'')?"?([^";]+)/i)?.[1] || kind);
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement("a");
+  link.href = url; link.download = name; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function render(job) {
+  const s = job.summary || {}, t = job.timings || {};
+  const names = { docx: T().dlDocx, pdf: T().dlPdf, markdown: T().dlMarkdown };
+  const links = Object.keys(job.files).map((k) => `<a href="#" data-kind="${esc(k)}">${esc(names[k] || k)}</a>`).join("");
+  const rows = (job.pages || []).map((p) => `<tr>
+      <td>${p.page}</td>
+      <td><span class="tag ${p.ocr ? "ocr" : ""}">${esc(p.label)}</span></td>
+      <td>${esc(p.reason)}</td>
+      <td>${p.seconds != null ? p.seconds.toFixed(1) + "s" : ""}</td></tr>`).join("");
+  box.innerHTML = `
+    <div class="ok">${esc(T().done(job.page_count, s.ocr_pages ?? 0, (t.total ?? 0).toFixed(1)))}</div>
+    <div class="files">${links}</div>
+    <div class="scroll"><table><tr><th>${T().colPage}</th><th>${T().colKind}</th><th>${T().colReason}</th><th>${T().colTime}</th></tr>${rows}</table></div>`;
+  box.querySelectorAll("a[data-kind]").forEach((a) => a.onclick = (e) => {
+    e.preventDefault();
+    download(job.job_id, a.dataset.kind, a).catch((err) => alert(err.message));
+  });
+}
+applyLang();
+</script>
+</body>
+</html>

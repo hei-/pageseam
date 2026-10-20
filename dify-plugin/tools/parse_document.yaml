@@ -1,0 +1,146 @@
+identity:
+  name: parse_document
+  author: hei-
+  label:
+    en_US: Parse Document to Markdown
+    zh_Hans: 解析文档为 Markdown
+description:
+  human:
+    en_US: Parse a PDF, Word document or image into Markdown for knowledge bases. Text pages use the original text; scanned pages, garbled pages and images inside pages are OCR'd; tables spanning pages are merged. Each page starts with a page marker comment; also outputs page-aware chunks for the Knowledge Base node.
+    zh_Hans: 把 PDF、Word 或图片解析成 Markdown，用于知识库。文字型页直接用原文，扫描页、乱码页和页内图片做 OCR，跨页表格合并成一张表。每页开头带页码标记注释；同时输出按页分好的 chunks，可直接接知识库节点。
+  llm: Parse a PDF, Word (doc/docx), PowerPoint or image file into Markdown text. Use it when you need the readable content of a document, including scanned documents. Large scanned documents may take minutes; if not finished in time, it returns a job_id for get_job_result.
+parameters:
+  - name: file
+    type: file
+    required: true
+    form: llm
+    label:
+      en_US: File
+      zh_Hans: 文件
+    human_description:
+      en_US: PDF, Word (doc, docx), PowerPoint (ppt, pptx) or image (png, jpg, tif, webp, bmp). Office files are converted to PDF first.
+      zh_Hans: PDF、Word（doc、docx）、PPT（ppt、pptx）或图片（png、jpg、tif、webp、bmp）。Office 文件先转成 PDF。
+    llm_description: The PDF, Word, PowerPoint or image file to process.
+  - name: ocr
+    type: select
+    required: false
+    default: auto
+    form: form
+    label:
+      en_US: OCR
+      zh_Hans: OCR
+    human_description:
+      en_US: auto detects page by page; force runs OCR on every page; off never runs OCR.
+      zh_Hans: auto 逐页自动判断；force 所有页面 OCR；off 不做 OCR。
+    options:
+      - value: auto
+        label:
+          en_US: Auto
+          zh_Hans: 自动判断
+      - value: force
+        label:
+          en_US: Force
+          zh_Hans: 全部 OCR
+      - value: "off"
+        label:
+          en_US: "Off"
+          zh_Hans: 不做 OCR
+  - name: ocr_pages
+    type: string
+    required: false
+    form: form
+    label:
+      en_US: Extra OCR pages
+      zh_Hans: 额外指定 OCR 的页
+    human_description:
+      en_US: Pages that always get full-page OCR, e.g. 3,5-8. Use when auto detection is wrong.
+      zh_Hans: 这些页始终整页 OCR，如 3,5-8。自动判断出错时使用。
+  - name: pages
+    type: string
+    required: false
+    form: llm
+    label:
+      en_US: Page range
+      zh_Hans: 页码范围
+    human_description:
+      en_US: Only process these pages, e.g. 1-10 or 2,4-6. Empty means all pages.
+      zh_Hans: 只处理这些页，如 1-10 或 2,4-6。留空处理全部。
+    llm_description: Optional 1-based page ranges to process, e.g. "1-10". Leave empty for all pages.
+  - name: wait_seconds
+    type: number
+    required: false
+    default: 540
+    form: form
+    label:
+      en_US: Wait seconds
+      zh_Hans: 等待秒数
+    human_description:
+      en_US: How long to wait for the result (max 540). If not finished, returns job_id for Get Job Result.
+      zh_Hans: 等待结果的最长时间（最多 540 秒）。超时后返回 job_id，可用「查询任务结果」工具获取。
+  - name: page_markers
+    type: boolean
+    required: false
+    default: true
+    form: form
+    label:
+      en_US: Page markers
+      zh_Hans: 页码标记
+    human_description:
+      en_US: Insert <!-- page N --> at the start of each page so retrieval results can cite page numbers.
+      zh_Hans: 在每页开头插入 <!-- page N -->，检索结果可以引用页码。
+  - name: chunk_max_chars
+    type: number
+    required: false
+    default: 800
+    form: form
+    label:
+      en_US: Chunk max chars
+      zh_Hans: 分段最大字数
+    human_description:
+      en_US: Max characters per chunk in the chunks output. Chunks never cross pages, headings start a new chunk. Tables follow "Table max chars".
+      zh_Hans: chunks 输出中每段的最大字数。分段不跨页，标题开始新段。表格按「表格最大字数」分段。
+  - name: table_max_chars
+    type: number
+    required: false
+    default: 0
+    form: form
+    label:
+      en_US: Table max chars
+      zh_Hans: 表格最大字数
+    human_description:
+      en_US: Tables up to this length (including tables merged across pages) stay in one chunk; longer tables are split by rows with the header repeated in every chunk. 0 means the same as "Chunk max chars"; set 2000-3000 to keep most tables whole, e.g. when questions need totals or counts.
+      zh_Hans: 不超过这个字数的表格（包括跨页合并后的表格）整张放进一个分段；超长的按行切开，每段都带表头。0 表示与「分段最大字数」相同；要让表格整张一段（如回答合计、一共几项），填 2000–3000。
+  - name: chunk_doc_name
+    type: boolean
+    required: false
+    default: true
+    form: form
+    label:
+      en_US: Document name in chunks
+      zh_Hans: 分段标注文档名
+    human_description:
+      en_US: Start every chunk with the file name, e.g. 【Manual v2.1 · 第 3 页】, so the model can tell similar documents (such as old and new versions) apart.
+      zh_Hans: 每段开头标注文件名，如「【手册 v2.1 · 第 3 页】」，模型才能区分内容相近的文档（如同一手册的新旧版本）。
+output_schema:
+  type: object
+  properties:
+    chunks:
+      type: array
+      items:
+        type: string
+      description: Knowledge base chunks split by page; each starts with 【document · 第 N 页 · section】. Connect it to the Knowledge Base node directly.
+    job_id:
+      type: string
+      description: Job id; pass it to get_job_result when the job is still running
+    status:
+      type: string
+      description: succeeded, queued or running
+    page_count:
+      type: number
+      description: Number of pages in the document
+    ocr_pages:
+      type: number
+      description: Number of pages that needed OCR
+extra:
+  python:
+    source: tools/parse_document.py

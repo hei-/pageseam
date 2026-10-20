@@ -1,0 +1,48 @@
+identity:
+  name: get_job_result
+  author: hei-
+  label:
+    en_US: Get Job Result
+    zh_Hans: 查询任务结果
+description:
+  human:
+    en_US: Fetch the result of a job that was still running when the parse or convert tool returned.
+    zh_Hans: 获取解析或转换工具返回时仍在处理中的任务结果。
+  llm: Fetch the result of a document job by job_id, returned earlier by parse_document or convert_document when the job was still running.
+parameters:
+  - name: job_id
+    type: string
+    required: true
+    form: llm
+    label:
+      en_US: Job ID
+      zh_Hans: 任务 ID
+    human_description:
+      en_US: The job_id returned when the parse or convert tool timed out.
+      zh_Hans: 解析或转换工具超时返回的 job_id。
+    llm_description: The job_id returned by parse_document or convert_document.
+  - name: wait_seconds
+    type: number
+    required: false
+    default: 540
+    form: form
+    label:
+      en_US: Wait seconds
+      zh_Hans: 等待秒数
+    human_description:
+      en_US: How long to wait for the result (max 540).
+      zh_Hans: 等待结果的最长时间（最多 540 秒）。
+output_schema:
+  type: object
+  properties:
+    job_id:
+      type: string
+    status:
+      type: string
+    page_count:
+      type: number
+    ocr_pages:
+      type: number
+extra:
+  python:
+    source: tools/get_job_result.py

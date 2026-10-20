@@ -1,0 +1,35 @@
+# 单机部署：docker compose up -d --build
+# API Key 写在同目录的 .env 里（不要提交）：PAGESEAM_API_KEYS=<随机字符串>，多个用逗号分隔
+# 生成方法：python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+services:
+  pageseam:
+    build: .
+    image: pageseam:latest
+    restart: unless-stopped
+    ports:
+      - "${PAGESEAM_PORT:-8000}:8000"
+    environment:
+      API_KEYS: ${PAGESEAM_API_KEYS:?在 .env 中设置 PAGESEAM_API_KEYS}
+      MAX_WORKERS: ${PAGESEAM_MAX_WORKERS:-2}  # 同时处理的任务数，每个任务进程约 2.8GB 内存
+      OCR_THREADS: ${PAGESEAM_OCR_THREADS:-2}  # 每个任务的 CPU 线程数
+      MAX_QUEUE: "20"
+      JOB_TTL_MINUTES: "60"
+      OCR_DEVICE: cpu
+      DEFAULT_LANGUAGE: ${PAGESEAM_DEFAULT_LANGUAGE:-en}  # 请求没有 Accept-Language 时的报错语言：en / zh
+    # 上传的文件和结果只放在临时目录，到期自动删除，容器重建后清空
+    tmpfs:
+      - /data:size=5g,mode=1777
+      - /tmp:size=2g,mode=1777
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 7g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
