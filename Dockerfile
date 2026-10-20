@@ -39,13 +39,18 @@ ARG PIP_INDEX=https://pypi.org/simple/
 # constraints.txt 锁定全部 Python 包（含间接依赖）的版本，每次构建结果一致；
 # 更新依赖用 scripts/update-constraints.sh，它以 --build-arg CONSTRAINTS= 不带锁定构建
 ARG CONSTRAINTS=constraints.txt
-# 先升级基础镜像自带的 pip（旧版本有已知安全漏洞）
+# 先升级基础镜像自带的 pip（旧版本有已知安全漏洞）；装完依赖后：
+# - setuptools 升到 83.0.0：基础镜像自带的版本里捆绑的 jaraco.context、wheel 有已知漏洞。
+#   不能删除：PaddlePaddle 导入时会加载 setuptools 的 easy_install、bdist_egg
+# - 卸载 pip：运行时用不到，它捆绑的 urllib3、msgpack 等有已知漏洞。需要时用 python -m ensurepip 装回
 # PaddlePaddle 的版本写在构建参数 PADDLE_PACKAGE 的默认值里，hadolint 识别不出来
 # hadolint ignore=DL3013
 RUN echo "Using pip index: $PIP_INDEX" && \
     pip install --no-cache-dir --no-compile pip==26.2.1 -i "$PIP_INDEX" && \
     pip install --no-cache-dir --no-compile "$PADDLE_PACKAGE" ${CONSTRAINTS:+-c "$CONSTRAINTS"} -i "${PADDLE_INDEX:-$PIP_INDEX}" --extra-index-url "$PIP_INDEX" && \
-    pip install --no-cache-dir --no-compile -r requirements.txt ${CONSTRAINTS:+-c "$CONSTRAINTS"} -i "$PIP_INDEX"
+    pip install --no-cache-dir --no-compile -r requirements.txt ${CONSTRAINTS:+-c "$CONSTRAINTS"} -i "$PIP_INDEX" && \
+    pip install --no-cache-dir --no-compile setuptools==83.0.0 -i "$PIP_INDEX" && \
+    pip uninstall -y pip
 
 # 预下载 OCR 模型（约 600MB）。单独一层：只改代码时不需要重新下载
 # 模型组合和 config.py 的默认值一致；GPU 部署换模型时用同名构建参数，构建和运行使用同一组模型

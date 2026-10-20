@@ -28,7 +28,7 @@ echo "PAGESEAM_API_KEYS=$(python3 -c 'import secrets; print(secrets.token_urlsaf
 docker compose up -d --build      # first build takes ~15 min: ~4.2 GB image, incl. ~600 MB of OCR models downloaded at build time
 ```
 
-Upload page at `http://localhost:8000/` (enter the API key from `.env`), API docs at `/docs`. No internet access is needed at runtime.
+Upload page at `http://localhost:8000/` (enter the API key from `.env`), API docs at `/docs`. No internet access is needed at runtime. The image ships without pip (it is not needed at runtime); if you extend the image, run `python -m ensurepip` first.
 
 Build arguments:
 

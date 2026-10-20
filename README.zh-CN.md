@@ -28,7 +28,7 @@ echo "PAGESEAM_API_KEYS=$(python3 -c 'import secrets; print(secrets.token_urlsaf
 docker compose up -d --build      # 首次构建约 15 分钟：镜像约 4.2GB，其中 OCR 模型约 600MB 在构建时预下载
 ```
 
-上传页面 `http://localhost:8000/`（填入 `.env` 里的 API Key），接口文档 `/docs`。运行时不需要访问外网。
+上传页面 `http://localhost:8000/`（填入 `.env` 里的 API Key），接口文档 `/docs`。运行时不需要访问外网。镜像里没有 pip（运行时用不到），基于它再装别的包时先运行 `python -m ensurepip`。
 
 构建参数：
 
