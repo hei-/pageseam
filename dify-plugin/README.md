@@ -2,9 +2,9 @@
 
 English | [Simplified Chinese](readme/README_zh_Hans.md)
 
-Source code: https://github.com/hei-/pageseam
+Source code: https://github.com/heiworks/pageseam
 
-Parse PDF, Word (doc, docx), PowerPoint and images with your self-hosted [PageSeam](https://github.com/hei-/pageseam) service. It decides page by page whether OCR is needed and outputs Markdown for knowledge bases, searchable PDF or Word. Scans embedded in Word files are recognized, and tables spanning pages are merged into one.
+Parse PDF, Word (doc, docx), PowerPoint and images with your self-hosted [PageSeam](https://github.com/heiworks/pageseam) service. It decides page by page whether OCR is needed and outputs Markdown for knowledge bases, searchable PDF or Word. Scans embedded in Word files are recognized, and tables spanning pages are merged into one.
 
 **You need a running PageSeam service** (Docker, runs on CPU). The plugin only uploads files and fetches results; files are sent only to the service URL you configure, never to third parties.
 
@@ -28,10 +28,10 @@ Parse PDF, Word (doc, docx), PowerPoint and images with your self-hosted [PageSe
 
 ## Installation
 
-Package it with the [Dify plugin CLI](https://docs.dify.ai/en/develop-plugin/getting-started/getting-started-dify-plugin) (`dify plugin package ./dify-plugin`) and upload it under "Plugins → Install plugin → Local package". Locally packaged plugins must be signed, see [GUIDE.md](https://github.com/hei-/pageseam/blob/main/dify-plugin/GUIDE.md#signing).
+Package it with the [Dify plugin CLI](https://docs.dify.ai/en/develop-plugin/getting-started/getting-started-dify-plugin) (`dify plugin package ./dify-plugin`) and upload it under "Plugins → Install plugin → Local package". Locally packaged plugins must be signed, see [GUIDE.md](https://github.com/heiworks/pageseam/blob/main/dify-plugin/GUIDE.md#signing).
 
-Chunking rules, signing and development notes: [GUIDE.md](https://github.com/hei-/pageseam/blob/main/dify-plugin/GUIDE.md).
+Chunking rules, signing and development notes: [GUIDE.md](https://github.com/heiworks/pageseam/blob/main/dify-plugin/GUIDE.md).
 
 ## License
 
-[MIT](https://github.com/hei-/pageseam/blob/main/dify-plugin/LICENSE). The PageSeam service is AGPL-3.0.
+[MIT](https://github.com/heiworks/pageseam/blob/main/dify-plugin/LICENSE). The PageSeam service is AGPL-3.0.

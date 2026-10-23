@@ -2,9 +2,9 @@
 
 [English](../README.md) | 简体中文
 
-源码：https://github.com/hei-/pageseam
+源码：https://github.com/heiworks/pageseam
 
-调用自部署的 [PageSeam](https://github.com/hei-/pageseam/blob/main/README.zh-CN.md) 服务解析 PDF、Word（doc、docx）、PPT 和图片：逐页判断是否需要 OCR，输出 Markdown（给知识库）、可搜索 PDF 或 Word。Word 里嵌入的扫描页会被识别，跨页表格合并成一张表。
+调用自部署的 [PageSeam](https://github.com/heiworks/pageseam/blob/main/README.zh-CN.md) 服务解析 PDF、Word（doc、docx）、PPT 和图片：逐页判断是否需要 OCR，输出 Markdown（给知识库）、可搜索 PDF 或 Word。Word 里嵌入的扫描页会被识别，跨页表格合并成一张表。
 
 **需要先部署 PageSeam 服务**（Docker，CPU 可运行）。插件只负责上传文件、取回结果；文件只发送到你配置的服务地址，不发送给第三方。
 
@@ -28,10 +28,10 @@
 
 ## 安装
 
-用 [Dify 插件 CLI](https://docs.dify.ai/en/develop-plugin/getting-started/getting-started-dify-plugin) 打包（`dify plugin package ./dify-plugin`），在「插件 → 安装插件 → 本地插件」中上传。本地打包的插件需要签名，见 [GUIDE.zh-CN.md](https://github.com/hei-/pageseam/blob/main/dify-plugin/GUIDE.zh-CN.md#签名)。
+用 [Dify 插件 CLI](https://docs.dify.ai/en/develop-plugin/getting-started/getting-started-dify-plugin) 打包（`dify plugin package ./dify-plugin`），在「插件 → 安装插件 → 本地插件」中上传。本地打包的插件需要签名，见 [GUIDE.zh-CN.md](https://github.com/heiworks/pageseam/blob/main/dify-plugin/GUIDE.zh-CN.md#签名)。
 
-分段规则、签名和开发注意事项见 [GUIDE.zh-CN.md](https://github.com/hei-/pageseam/blob/main/dify-plugin/GUIDE.zh-CN.md)。
+分段规则、签名和开发注意事项见 [GUIDE.zh-CN.md](https://github.com/heiworks/pageseam/blob/main/dify-plugin/GUIDE.zh-CN.md)。
 
 ## 许可证
 
-[MIT](https://github.com/hei-/pageseam/blob/main/dify-plugin/LICENSE)。PageSeam 服务端是 AGPL-3.0。
+[MIT](https://github.com/heiworks/pageseam/blob/main/dify-plugin/LICENSE)。PageSeam 服务端是 AGPL-3.0。

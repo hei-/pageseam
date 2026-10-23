@@ -1,6 +1,6 @@
 identity:
   name: parse_document
-  author: hei-
+  author: heiworks
   label:
     en_US: Parse Document to Markdown
     zh_Hans: 解析文档为 Markdown
